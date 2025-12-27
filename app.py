@@ -3,7 +3,7 @@ from flask_socketio import SocketIO, send
 import os
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.urandom(24)
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev_key')
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 @app.route('/')
