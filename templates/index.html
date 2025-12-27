@@ -2,44 +2,214 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Mon Chat</title>
+<title>HelloChat</title>
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <style>
-body{background:#111;color:#fff;font-family:Arial;display:flex;justify-content:center}
-#chat{width:400px;margin-top:40px;background:#1e1e1e;padding:15px;border-radius:10px}
-#messages{height:300px;overflow-y:auto;border:1px solid #333;padding:5px;margin-bottom:10px}
-input,button{width:100%;padding:8px;margin-top:5px}
-button{background:#4caf50;border:none;color:white}
+* {
+  box-sizing: border-box;
+  font-family: "Segoe UI", Arial, sans-serif;
+}
+
+body {
+  margin: 0;
+  height: 100vh;
+  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#chat-container {
+  width: 380px;
+  height: 600px;
+  background: #111;
+  border-radius: 15px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 0 30px rgba(0,0,0,0.6);
+}
+
+#chat-header {
+  padding: 15px;
+  background: #1f1f1f;
+  text-align: center;
+  font-size: 20px;
+  font-weight: bold;
+  color: #4cafef;
+}
+
+#messages {
+  flex: 1;
+  padding: 15px;
+  overflow-y: auto;
+  background: #0b0b0b;
+}
+
+.message {
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  max-width: 80%;
+  word-wrap: break-word;
+  animation: fadeIn 0.2s ease;
+}
+
+.message.user {
+  background: #4cafef;
+  color: #000;
+  margin-left: auto;
+  text-align: right;
+}
+
+.message.other {
+  background: #2a2a2a;
+  color: #fff;
+  margin-right: auto;
+}
+
+#chat-input {
+  display: flex;
+  padding: 10px;
+  background: #1a1a1a;
+}
+
+#chat-input input {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  outline: none;
+  background: #2a2a2a;
+  color: #fff;
+}
+
+#chat-input button {
+  margin-left: 10px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  background: #4cafef;
+  color: #000;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+#chat-input button:hover {
+  background: #6cc6ff;
+}
+
+#login {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#login-box {
+  background: #1a1a1a;
+  padding: 25px;
+  border-radius: 12px;
+  text-align: center;
+  width: 280px;
+}
+
+#login-box h2 {
+  margin-bottom: 15px;
+  color: #4cafef;
+}
+
+#login-box input {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  background: #2a2a2a;
+  color: #fff;
+}
+
+#login-box button {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  background: #4cafef;
+  color: #000;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+@keyframes fadeIn {
+  from {opacity: 0; transform: translateY(5px);}
+  to {opacity: 1; transform: translateY(0);}
+}
 </style>
 </head>
 <body>
-<div id="chat">
-<h2>💬 Mon WebChat</h2>
-<div id="messages"></div>
-<input id="username" placeholder="Pseudo">
-<input id="message" placeholder="Message..." onkeypress="if(event.key==='Enter')sendMessage()">
-<button onclick="sendMessage()">Envoyer</button>
+
+<div id="chat-container">
+  <div id="chat-header">💬 HelloChat</div>
+  <div id="messages"></div>
+  <div id="chat-input">
+    <input id="message" placeholder="Écris un message..." autocomplete="off">
+    <button onclick="sendMessage()">Envoyer</button>
+  </div>
+</div>
+
+<div id="login">
+  <div id="login-box">
+    <h2>Connexion</h2>
+    <input id="username" placeholder="Ton pseudo">
+    <button onclick="login()">Entrer</button>
+  </div>
 </div>
 
 <script>
 const socket = io();
+let username = "";
+
 const messages = document.getElementById('messages');
+const messageInput = document.getElementById('message');
 
-socket.on('message', msg => {
-  const p = document.createElement('p');
-  p.textContent = msg;
-  messages.appendChild(p);
-  messages.scrollTop = messages.scrollHeight;
-});
-
-function sendMessage(){
-  const user = username.value || "Anonyme";
-  const msg = message.value;
-  if(msg.trim()!==""){
-    socket.send(user+" : "+msg);
-    message.value="";
+function login() {
+  const u = document.getElementById('username').value.trim();
+  if (u !== "") {
+    username = u;
+    document.getElementById('login').style.display = "none";
   }
 }
+
+function addMessage(text, type) {
+  const div = document.createElement('div');
+  div.className = 'message ' + type;
+  div.textContent = text;
+  messages.appendChild(div);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+socket.on('message', msg => {
+  if (msg.startsWith(username + " :")) {
+    addMessage(msg.replace(username + " :", "Moi :"), "user");
+  } else {
+    addMessage(msg, "other");
+  }
+});
+
+function sendMessage() {
+  const msg = messageInput.value.trim();
+  if (msg !== "" && username !== "") {
+    socket.send(username + " : " + msg);
+    messageInput.value = "";
+  }
+}
+
+messageInput.addEventListener("keypress", e => {
+  if (e.key === "Enter") sendMessage();
+});
 </script>
+
 </body>
 </html>
